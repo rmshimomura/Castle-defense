@@ -33,3 +33,4 @@ class Castle():
         print("Castle Health Points: ", self.health_points)
         for wall in self.walls:
             print("WALL " + wall.side + f" [{wall.attack_points} - {wall.defense_points}]")
+        print("=====================================")
