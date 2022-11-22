@@ -34,3 +34,11 @@ class Castle():
         for wall in self.walls:
             print("WALL " + wall.side + f" [{wall.attack_points} - {wall.defense_points}]")
         print("=====================================")
+
+def generate_population(quantity, ATTACK_LIMIT, DEFENSE_LIMIT, DIRECTIONS, MINIMUM_VALUE, CASTLE_HEALTH):
+    population = []
+    for _ in range(quantity):
+        new_castle = Castle(CASTLE_HEALTH)
+        new_castle.generate_walls(ATTACK_LIMIT, DEFENSE_LIMIT, DIRECTIONS, MINIMUM_VALUE)
+        population.append(new_castle)
+    return population
