@@ -79,6 +79,14 @@ def test_population(represented_population, attackers):
             # print(f"Iteration: {iteration}, Castle Health: {chromosome.health}, Attackers Health: {sum([attacker.health_points for attacker in attackers])}, total castle dmg taken: {total_castle_dmg_taken}")
         castle_number += 1
 
+def filter_valid_chromosomes(represented_population, population):
+    for chromosome in represented_population:
+        if chromosome.fitness == -1:
+            represented_population.remove(chromosome)
+ 
+    if len(represented_population) < len(population):
+        print(f"{len(population) - len(represented_population)} chromosomes were removed from the population because\nthey didn't do any damage to the castle or the attackers\ncausing an infinite loop\n")
+
 if __name__ == "__main__":
 
     population = castle.generate_population(POPULATION_SIZE, ATTACK_LIMIT, DEFENSE_LIMIT, DIRECTIONS, MINIMUM_VALUE, CASTLE_HEALTH)
@@ -87,12 +95,7 @@ if __name__ == "__main__":
 
     test_population(represented_population, attackers)
 
-    for chromosome in represented_population:
-        if chromosome.fitness == -1:
-            represented_population.remove(chromosome)
- 
-    if len(represented_population) < len(population):
-        print(f"{len(population) - len(represented_population)} chromosomes were removed from the population because\nthey had a problem where they didn't do any damage to\nthe castle or the attackers causing an infinite loop\n")
+    filter_valid_chromosomes(represented_population, population)
 
     print("Population size:", len(represented_population))
 
