@@ -7,28 +7,28 @@ ATTACK_LIMIT = 100
 DEFENSE_LIMIT = 100
 MINIMUM_VALUE = 10
 CASTLE_HEALTH = 1000
-POPULATION_SIZE = 100
+POPULATION_SIZE = 1000
 
 DIRECTIONS = ["N", "S", "W", "E"]
 
-def basic_info(represent_population, attackers):
-    for chromosome in represent_population:
+def basic_info(represented_population, attackers):
+    for chromosome in represented_population:
         print(chromosome.genes)
 
     for attacker in attackers:
         print(attacker.attack_points, attacker.defense_points, attacker.health_points)
 
-def test_population(represent_population, attackers):
+def test_population(represented_population, attackers):
     # Make backup_attackers receive the same values as attackers to avoid changing the original list and make backup_attacks immutable
     backup_attackers = copy.deepcopy(attackers)
     
-    basic_info(represent_population, attackers)
+    basic_info(represented_population, attackers)
 
     castle_number = 1
 
-    for chromosome in represent_population: # For each chromosome in the population
+    for chromosome in represented_population: # For each chromosome in the population
 
-        print("CASTLE : ", castle_number)
+        print("CASTLE :", castle_number)
 
         iteration = 0
 
@@ -40,8 +40,6 @@ def test_population(represent_population, attackers):
             total_castle_dmg_taken = 0
 
             total_attackers_dmg_taken = 0
-
-            problem = False
 
             for i in range(4):
 
@@ -84,7 +82,26 @@ def test_population(represent_population, attackers):
 if __name__ == "__main__":
 
     population = castle.generate_population(POPULATION_SIZE, ATTACK_LIMIT, DEFENSE_LIMIT, DIRECTIONS, MINIMUM_VALUE, CASTLE_HEALTH)
-    represent_population = genetics.represent_population(population)
+    represented_population = genetics.represented_population(population)
     attackers = attack.generate_attacks(ATTACK_LIMIT + 100, DEFENSE_LIMIT, MINIMUM_VALUE)
 
-    test_population(represent_population, attackers)
+    test_population(represented_population, attackers)
+
+    for chromosome in represented_population:
+        if chromosome.fitness == -1:
+            represented_population.remove(chromosome)
+ 
+    if len(represented_population) < len(population):
+        print(f"{len(population) - len(represented_population)} chromosomes were removed from the population because\nthey had a problem where they didn't do any damage to\nthe castle or the attackers causing an infinite loop\n")
+
+    print("Population size:", len(represented_population))
+
+    tournament_selection = genetics.tournament_selection(represented_population, 2)
+
+    print("Tournament Selection size:", len(tournament_selection))
+
+
+
+    for chromosome in tournament_selection:
+
+        print(chromosome.genes, chromosome.fitness)
