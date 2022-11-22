@@ -7,7 +7,7 @@ ATTACK_LIMIT = 100
 DEFENSE_LIMIT = 100
 MINIMUM_VALUE = 10
 CASTLE_HEALTH = 1000
-POPULATION_SIZE = 1000
+POPULATION_SIZE = 10
 
 DIRECTIONS = ["N", "S", "W", "E"]
 
@@ -19,26 +19,22 @@ def basic_info(represented_population, attackers):
         print(attacker.attack_points, attacker.defense_points, attacker.health_points)
 
 def test_population(represented_population, attackers):
-    # Make backup_attackers receive the same values as attackers to avoid changing the original list and make backup_attacks immutable
+
     backup_attackers = copy.deepcopy(attackers)
     
     basic_info(represented_population, attackers)
 
     castle_number = 1
 
-    for chromosome in represented_population: # For each chromosome in the population
+    for chromosome in represented_population:
 
         print("CASTLE :", castle_number)
-
         iteration = 0
-
-        # Reset attackers to the original values on backup_attackers
         attackers = copy.deepcopy(backup_attackers)
 
         while True:
 
             total_castle_dmg_taken = 0
-
             total_attackers_dmg_taken = 0
 
             for i in range(4):
@@ -101,10 +97,16 @@ if __name__ == "__main__":
 
     tournament_selection = genetics.tournament_selection(represented_population, 2)
 
-    print("Tournament Selection size:", len(tournament_selection))
-
-
+    print("BEFORE CROSSOVER")
 
     for chromosome in tournament_selection:
 
         print(chromosome.genes, chromosome.fitness)
+
+    genetics.crossover(tournament_selection, ATTACK_LIMIT, DEFENSE_LIMIT)
+
+    print("AFTER CROSSOVER")
+
+    for chromosome in tournament_selection:
+        chromosome.fitness = 0
+        print(chromosome.genes)
