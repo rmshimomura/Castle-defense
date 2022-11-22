@@ -62,7 +62,7 @@ def redistribute_points(chromosome, sum_points, MAX_VALUE, change_point, mode):
     if difference > 0:
 
 
-        for index in indexes: # Problema aqui!
+        for index in indexes:
             chromosome.genes[index][mode] -= abs(difference_to_each_side)
         if difference % 3 != 0:
             compensate_index = random.choice(indexes)
@@ -70,7 +70,7 @@ def redistribute_points(chromosome, sum_points, MAX_VALUE, change_point, mode):
 
     elif difference < 0:
 
-        for index in indexes: # Problema aqui!
+        for index in indexes:
             chromosome.genes[index][mode] += abs(difference_to_each_side)
         if difference % 3 != 0:
             compensate_index = random.choice(indexes)
@@ -100,7 +100,7 @@ def crossover(population, MAXIMUM_ATK_VALUE, MAXIMUM_DEF_VALUE):
             second_chromosome = population[i + 1]
             crossover_point = random.randint(1, len(first_chromosome.genes) - 1)
             first_chromosome.genes[crossover_point:], second_chromosome.genes[crossover_point:] = second_chromosome.genes[crossover_point:], first_chromosome.genes[crossover_point:]
-            
+
             check_sum_chromosome(first_chromosome, MAXIMUM_ATK_VALUE, MAXIMUM_DEF_VALUE, crossover_point)
             check_sum_chromosome(second_chromosome, MAXIMUM_ATK_VALUE, MAXIMUM_DEF_VALUE, crossover_point)
 
