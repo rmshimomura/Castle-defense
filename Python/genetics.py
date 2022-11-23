@@ -27,8 +27,16 @@ def tournament_selection(population, tournament_size):
     temp_population = copy.deepcopy(population)
     selected_chromosomes = []
     while True:
+        
+        if len(temp_population) == 0:
+            break
+        
         first_chromossome = random.choice(temp_population)
         second_chromossome = random.choice(temp_population)
+
+        if len(temp_population) == 1:
+            selected_chromosomes.append(first_chromossome)
+            break
 
         while first_chromossome == second_chromossome:
             second_chromossome = random.choice(temp_population)
@@ -40,12 +48,6 @@ def tournament_selection(population, tournament_size):
 
         temp_population.remove(first_chromossome)
         temp_population.remove(second_chromossome)
-
-        if len(temp_population) == 0:
-            break
-        if len(temp_population) == 1:
-            selected_chromosomes.append(first_chromossome)
-            break
     
     # Sort selected chromosomes by fitness
     selected_chromosomes.sort(key=lambda x: x.fitness, reverse=True)
@@ -88,9 +90,6 @@ def check_sum_chromosome(chromosome, MAXIMUM_ATK_VALUE, MAXIMUM_DEF_VALUE, chang
     if sum_defense != MAXIMUM_DEF_VALUE:
 
         redistribute_points(chromosome, sum_defense, MAXIMUM_DEF_VALUE, change_point, mode = 1)
-
-    sum_attack = sum([gene[0] for gene in chromosome.genes])
-    sum_defense = sum([gene[1] for gene in chromosome.genes])
 
 def crossover(population, MAXIMUM_ATK_VALUE, MAXIMUM_DEF_VALUE):
 
