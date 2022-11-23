@@ -2,18 +2,26 @@ import castle
 import genetics
 import attack
 import copy
+import report
 
 ATTACK_LIMIT = 100
 DEFENSE_LIMIT = 100
 MINIMUM_VALUE = 10
 CASTLE_HEALTH = 1000
-POPULATION_SIZE = 10
+POPULATION_SIZE = 1000
+MUTATION_RATE = 0.9
+GENERATIONS = 200
 
 DIRECTIONS = ["N", "S", "W", "E"]
 
 def basic_info(represented_population, attackers):
+
+    castle_number = 1
+
     for chromosome in represented_population:
+        print("CASTLE :", castle_number)
         print(chromosome.genes)
+        castle_number += 1
 
     for attacker in attackers:
         print(attacker.attack_points, attacker.defense_points, attacker.health_points)
@@ -27,6 +35,8 @@ def test_population(represented_population, attackers):
     castle_number = 1
 
     for chromosome in represented_population:
+
+        chromosome.health = CASTLE_HEALTH
 
         print("CASTLE :", castle_number)
         iteration = 0
@@ -75,38 +85,51 @@ def test_population(represented_population, attackers):
             # print(f"Iteration: {iteration}, Castle Health: {chromosome.health}, Attackers Health: {sum([attacker.health_points for attacker in attackers])}, total castle dmg taken: {total_castle_dmg_taken}")
         castle_number += 1
 
-def filter_valid_chromosomes(represented_population, population):
+def filter_valid_chromosomes(represented_population):
+    before_size = len(represented_population)
+    
+    marked_chromosomes = []
+
     for chromosome in represented_population:
         if chromosome.fitness == -1:
-            represented_population.remove(chromosome)
- 
-    if len(represented_population) < len(population):
-        print(f"{len(population) - len(represented_population)} chromosomes were removed from the population because\nthey didn't do any damage to the castle or the attackers\ncausing an infinite loop\n")
+            marked_chromosomes.append(chromosome)
+    
+    for i in range(len(marked_chromosomes)):
+        represented_population.remove(marked_chromosomes[i])
+            
+    after_size = len(represented_population)
+
+    if after_size < before_size:
+        print(f"Removed {before_size - after_size} invalid chromosomes")
 
 if __name__ == "__main__":
 
     population = castle.generate_population(POPULATION_SIZE, ATTACK_LIMIT, DEFENSE_LIMIT, DIRECTIONS, MINIMUM_VALUE, CASTLE_HEALTH)
     represented_population = genetics.represented_population(population)
-    attackers = attack.generate_attacks(ATTACK_LIMIT + 100, DEFENSE_LIMIT, MINIMUM_VALUE)
+    attackers = attack.generate_attacks(ATTACK_LIMIT + 100, DEFENSE_LIMIT + 100, MINIMUM_VALUE)
+    fitnesses = []
 
-    test_population(represented_population, attackers)
+    for i in range(0, GENERATIONS):
 
-    filter_valid_chromosomes(represented_population, population)
+        print(f"========================================== GENERATION {i + 1} ==========================================")
 
-    print("Population size:", len(represented_population))
+        test_population(represented_population, attackers)
 
-    tournament_selection = genetics.tournament_selection(represented_population, 2)
+        filter_valid_chromosomes(represented_population)
 
-    print("BEFORE CROSSOVER")
+        tournament_selection = genetics.tournament_selection(represented_population, 2)
 
-    for chromosome in tournament_selection:
+        genetics.crossover(tournament_selection, ATTACK_LIMIT, DEFENSE_LIMIT, MINIMUM_VALUE)
 
-        print(chromosome.genes, chromosome.fitness)
+        genetics.mutation(tournament_selection, ATTACK_LIMIT, DEFENSE_LIMIT, MUTATION_RATE, MINIMUM_VALUE)
 
-    genetics.crossover(tournament_selection, ATTACK_LIMIT, DEFENSE_LIMIT)
+        fitnesses.append(max(represented_population, key=lambda chromosome: chromosome.fitness).fitness)
 
-    print("AFTER CROSSOVER")
+        represented_population = tournament_selection
 
-    for chromosome in tournament_selection:
-        chromosome.fitness = 0
-        print(chromosome.genes)
+    print("Printing the best fitnesses from each generation")
+
+    for i in range(0, GENERATIONS):
+        print(fitnesses[i])
+
+    report.generate_graph(fitnesses, GENERATIONS)
