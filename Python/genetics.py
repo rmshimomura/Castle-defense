@@ -13,7 +13,7 @@ class Chromosomes():
         for wall in self.raw_data.walls:
             self.genes.append([wall.attack_points, wall.defense_points])
 
-def represented_population(population):
+def represented_population(population : list):
     chromosomes = []
     for castle in population:
         chromosome = Chromosomes()
@@ -23,7 +23,7 @@ def represented_population(population):
         chromosomes.append(chromosome)
     return chromosomes
 
-def tournament_selection(population, tournament_size):
+def tournament_selection(population : list):
     temp_population = copy.deepcopy(population)
     selected_chromosomes = []
     while True:
@@ -40,9 +40,10 @@ def tournament_selection(population, tournament_size):
 
         while first_chromossome == second_chromossome:
             second_chromossome = random.choice(temp_population)
-        
+
         if first_chromossome.fitness >= second_chromossome.fitness:
             selected_chromosomes.append(first_chromossome)
+
         else:
             selected_chromosomes.append(second_chromossome)        
 
@@ -51,9 +52,10 @@ def tournament_selection(population, tournament_size):
     
     # Sort selected chromosomes by fitness
     selected_chromosomes.sort(key=lambda x: x.fitness, reverse=True)
+
     return selected_chromosomes
     
-def redistribute_points(chromosome, sum_points, MAX_VALUE, mode, MINIMUM_VALUE):
+def redistribute_points(chromosome : Chromosomes, sum_points : int, MAX_VALUE : int, mode : int, MINIMUM_VALUE : int):
 
     difference = sum_points - MAX_VALUE
 
@@ -65,7 +67,7 @@ def redistribute_points(chromosome, sum_points, MAX_VALUE, mode, MINIMUM_VALUE):
 
             if chromosome.genes[i][mode] - 1 >= MINIMUM_VALUE:
                 chromosome.genes[i][mode] -= 1
-            difference -= 1
+                difference -= 1
 
             i += 1
 
@@ -77,8 +79,10 @@ def redistribute_points(chromosome, sum_points, MAX_VALUE, mode, MINIMUM_VALUE):
         for i in range(0, len(chromosome.genes)):
 
             while chromosome.genes[i][mode] < MINIMUM_VALUE:
-                chromosome.gen[i][mode] += 1
+                chromosome.genes[i][mode] += 1
                 difference += 1
+                if difference == 0:
+                    break
 
         i = 0
 
@@ -92,39 +96,71 @@ def redistribute_points(chromosome, sum_points, MAX_VALUE, mode, MINIMUM_VALUE):
             if i == len(chromosome.genes):
                 i = 0
 
-def check_sum_chromosome(chromosome, MAXIMUM_ATK_VALUE, MAXIMUM_DEF_VALUE, MINIMUM_VALUE):
+    return chromosome.genes
+
+def check_sum_chromosome(chromosome : Chromosomes, MAXIMUM_ATK_VALUE : int, MAXIMUM_DEF_VALUE: int, MINIMUM_VALUE: int):
 
     sum_attack = sum([gene[0] for gene in chromosome.genes])
     sum_defense = sum([gene[1] for gene in chromosome.genes])
 
     if sum_attack != MAXIMUM_ATK_VALUE:
 
-        redistribute_points(chromosome, sum_attack, MAXIMUM_ATK_VALUE, 0, MINIMUM_VALUE)
+        chromosome.genes = redistribute_points(chromosome, sum_attack, MAXIMUM_ATK_VALUE, 0, MINIMUM_VALUE)
 
     if sum_defense != MAXIMUM_DEF_VALUE:
 
-        redistribute_points(chromosome, sum_defense, MAXIMUM_DEF_VALUE, 1, MINIMUM_VALUE)
+        chromosome.genes = redistribute_points(chromosome, sum_defense, MAXIMUM_DEF_VALUE, 1, MINIMUM_VALUE)
 
-def crossover(population, MAXIMUM_ATK_VALUE, MAXIMUM_DEF_VALUE, MINIMUM_VALUE):
+    return chromosome.genes
 
-    for i in range(0, len(population), 2):
-        if i + 1 < len(population):
-            first_chromosome = population[i]
-            second_chromosome = population[i + 1]
-            crossover_point = random.randint(1, len(first_chromosome.genes) - 1)
-            first_chromosome.genes[crossover_point:], second_chromosome.genes[crossover_point:] = second_chromosome.genes[crossover_point:], first_chromosome.genes[crossover_point:]
+def crossover(population: list, TARGET_POPULATION_SIZE: int):
 
-            check_sum_chromosome(first_chromosome, MAXIMUM_ATK_VALUE, MAXIMUM_DEF_VALUE, MINIMUM_VALUE)
-            check_sum_chromosome(second_chromosome, MAXIMUM_ATK_VALUE, MAXIMUM_DEF_VALUE, MINIMUM_VALUE)
+    original_size = len(population)
 
-        else:
+    while True:
+
+        first_chromosome = population[random.randint(0, original_size - 1)]
+        second_chromosome = population[random.randint(0, original_size - 1)]
+        crossover_point = random.randint(0, len(first_chromosome.genes) - 1)
+
+        first_new_chromosome = Chromosomes()
+        second_new_chromosome = Chromosomes()
+
+        first_new_chromosome.genes = copy.deepcopy(first_chromosome.genes[:crossover_point]) + copy.deepcopy(second_chromosome.genes[crossover_point:])
+        second_new_chromosome.genes = copy.deepcopy(second_chromosome.genes[:crossover_point]) + copy.deepcopy(first_chromosome.genes[crossover_point:])
+
+        first_new_chromosome.health = copy.deepcopy(first_chromosome.health)
+        second_new_chromosome.health = copy.deepcopy(second_chromosome.health)
+
+        first_new_chromosome.fitness = 0
+        second_new_chromosome.fitness = 0
+
+        if len(population) + 1 <= TARGET_POPULATION_SIZE:
+            population.append(first_new_chromosome)
+        if len(population) + 1 <= TARGET_POPULATION_SIZE:
+            population.append(second_new_chromosome)
+
+        if len(population) == TARGET_POPULATION_SIZE:
             break
 
-def mutation(population, MAXIMUM_ATK_VALUE, MAXIMUM_DEF_VALUE, MUTATION_RATE, MINIMUM_VALUE):
-    for i in range(0, len(population), 1):
-        for j in range(0, 4, 1):
+    return population
+
+def mutation(population : list, MAXIMUM_ATK_VALUE : int, MAXIMUM_DEF_VALUE : int, MUTATION_RATE : int, MINIMUM_VALUE : int):
+    
+    # Count the chromosomes whose fitness difference with the best chromosome is less than 30%
+    count = 0
+    
+    for chromosome in population:
+        if chromosome.fitness >= population[0].fitness * 0.7:
+            count += 1
+
+    elite_size = count
+
+    for i in range(elite_size, len(population), 1):
+        for j in range(4):
             random_number = random.uniform(0, 1)
             if(random_number <= MUTATION_RATE):
                 population[i].genes[j][0] = random.randint(MINIMUM_VALUE, MAXIMUM_ATK_VALUE)
                 population[i].genes[j][1] = random.randint(MINIMUM_VALUE, MAXIMUM_DEF_VALUE)
-            check_sum_chromosome(population[i], MAXIMUM_ATK_VALUE, MAXIMUM_DEF_VALUE, MINIMUM_VALUE)
+
+    return population

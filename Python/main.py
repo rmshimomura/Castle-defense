@@ -4,13 +4,17 @@ import attack
 import copy
 import report
 
-ATTACK_LIMIT = 100
-DEFENSE_LIMIT = 100
+CASTLE_ATTACK_POINTS = 100
+CASTLE_DEFENSE_POINTS = 100
 MINIMUM_VALUE = 10
 CASTLE_HEALTH = 1000
-POPULATION_SIZE = 1000
-MUTATION_RATE = 0.9
-GENERATIONS = 200
+POPULATION_SIZE = 100
+MUTATION_RATE = 0.15
+GENERATIONS = 100
+
+ATTACKERS_ATK_POINTS = CASTLE_ATTACK_POINTS + 100
+ATTACKERS_DEF_POINTS = CASTLE_DEFENSE_POINTS + 100
+
 
 DIRECTIONS = ["N", "S", "W", "E"]
 
@@ -18,19 +22,25 @@ def basic_info(represented_population, attackers):
 
     castle_number = 1
 
+    print("CASTLES:\n\n")
+
     for chromosome in represented_population:
-        print("CASTLE :", castle_number)
-        print(chromosome.genes)
+        
+        print(f"Castle {castle_number} - {chromosome.genes}")
         castle_number += 1
 
+    print("\nATTACKERS:\n")
+
     for attacker in attackers:
-        print(attacker.attack_points, attacker.defense_points, attacker.health_points)
+        print(attacker.attack_points, attacker.defense_points, attacker.health_points)\
+    
+    print("\n")
 
 def test_population(represented_population, attackers):
 
     backup_attackers = copy.deepcopy(attackers)
     
-    basic_info(represented_population, attackers)
+    # basic_info(represented_population, attackers)
 
     castle_number = 1
 
@@ -38,7 +48,6 @@ def test_population(represented_population, attackers):
 
         chromosome.health = CASTLE_HEALTH
 
-        print("CASTLE :", castle_number)
         iteration = 0
         attackers = copy.deepcopy(backup_attackers)
 
@@ -59,77 +68,83 @@ def test_population(represented_population, attackers):
                 total_attackers_dmg_taken += attackers_dmg_taken
                 attackers[i].health_points -= attackers_dmg_taken
 
-                if attackers[i].health_points <= 0:
-                    print("Attacker on side " + DIRECTIONS[i] + " died")
-
             if total_castle_dmg_taken == 0 and total_attackers_dmg_taken == 0:
                 chromosome.fitness = -1
-                print(f"{chromosome.genes} had a problem with {[(attacker.attack_points, attacker.defense_points, attacker.health_points) for attacker in attackers]}, fitness: {chromosome.fitness}\n\n")
                 break
 
             chromosome.health -= total_castle_dmg_taken
 
-            if sum([attacker.health_points for attacker in attackers]) <= 0:
-                
-                print(f"Castle survived the attack!, fitness: {chromosome.health + iteration}\n\n")
+            if sum([attacker.health_points for attacker in attackers]) <= 0:                
                 chromosome.fitness = chromosome.health + iteration
                 break
 
             if chromosome.health <= 0:
-                print(f"Castle destroyed, fitness: {iteration}\n\n")
                 chromosome.fitness = iteration
                 break
             
             iteration += 1
 
-            # print(f"Iteration: {iteration}, Castle Health: {chromosome.health}, Attackers Health: {sum([attacker.health_points for attacker in attackers])}, total castle dmg taken: {total_castle_dmg_taken}")
-        castle_number += 1
-
-def filter_valid_chromosomes(represented_population):
-    before_size = len(represented_population)
-    
-    marked_chromosomes = []
-
-    for chromosome in represented_population:
-        if chromosome.fitness == -1:
-            marked_chromosomes.append(chromosome)
-    
-    for i in range(len(marked_chromosomes)):
-        represented_population.remove(marked_chromosomes[i])
-            
-    after_size = len(represented_population)
-
-    if after_size < before_size:
-        print(f"Removed {before_size - after_size} invalid chromosomes")
+        castle_number += 1 
 
 if __name__ == "__main__":
 
-    population = castle.generate_population(POPULATION_SIZE, ATTACK_LIMIT, DEFENSE_LIMIT, DIRECTIONS, MINIMUM_VALUE, CASTLE_HEALTH)
+    population = castle.generate_population(POPULATION_SIZE, CASTLE_ATTACK_POINTS, CASTLE_DEFENSE_POINTS, DIRECTIONS, MINIMUM_VALUE, CASTLE_HEALTH)
     represented_population = genetics.represented_population(population)
-    attackers = attack.generate_attacks(ATTACK_LIMIT + 100, DEFENSE_LIMIT + 100, MINIMUM_VALUE)
+    attackers = attack.generate_attacks(ATTACKERS_ATK_POINTS, ATTACKERS_DEF_POINTS, MINIMUM_VALUE)
     fitnesses = []
+    genes = []
 
+    f = open("output_attacks.txt", "w")
+    f.write("ATTACKERS:\n\n")
+    for attacker in attackers:
+        f.write(f"{attacker.attack_points} {attacker.defense_points} {attacker.health_points}\n")
+    f.write("\n")
+
+    
     for i in range(0, GENERATIONS):
 
-        print(f"========================================== GENERATION {i + 1} ==========================================")
+        temp = []
+
+        for chromosome in represented_population:
+
+            chromosome.genes = genetics.check_sum_chromosome(chromosome, CASTLE_ATTACK_POINTS, CASTLE_DEFENSE_POINTS, MINIMUM_VALUE)
+            chromosome.health = CASTLE_HEALTH
+            chromosome.fitness = 0
+            new_chromosome = genetics.Chromosomes()
+            new_chromosome.genes = copy.deepcopy(chromosome.genes)
+            new_chromosome.health = copy.deepcopy(chromosome.health)
+            new_chromosome.fitness = copy.deepcopy(chromosome.fitness)
+            temp.append(new_chromosome)
+
+        represented_population = temp
 
         test_population(represented_population, attackers)
 
-        filter_valid_chromosomes(represented_population)
+        for chromosome in represented_population:
+            atk_sum = sum([gene[0] for gene in chromosome.genes])
+            def_sum = sum([gene[1] for gene in chromosome.genes])
+            if atk_sum != CASTLE_ATTACK_POINTS or def_sum != CASTLE_DEFENSE_POINTS:
+                print(f"Chromosome: {chromosome.genes}, atk_sum: {atk_sum}, def_sum: {def_sum}, fitness: {chromosome.fitness}, health: {chromosome.health}")
 
-        tournament_selection = genetics.tournament_selection(represented_population, 2)
+        represented_population.sort(key=lambda x: x.fitness, reverse=True)
 
-        genetics.crossover(tournament_selection, ATTACK_LIMIT, DEFENSE_LIMIT, MINIMUM_VALUE)
+        best_generation_chromosome = max(represented_population, key=lambda chromosome: chromosome.fitness)
 
-        genetics.mutation(tournament_selection, ATTACK_LIMIT, DEFENSE_LIMIT, MUTATION_RATE, MINIMUM_VALUE)
+        fitnesses.append(best_generation_chromosome.fitness)
 
-        fitnesses.append(max(represented_population, key=lambda chromosome: chromosome.fitness).fitness)
+        genes.append(best_generation_chromosome.genes)
 
-        represented_population = tournament_selection
+        tournament_selection = genetics.tournament_selection(represented_population)
 
-    print("Printing the best fitnesses from each generation")
+        crossover = genetics.crossover(tournament_selection, POPULATION_SIZE)
 
-    for i in range(0, GENERATIONS):
-        print(fitnesses[i])
+        mutation = genetics.mutation(crossover, CASTLE_ATTACK_POINTS, CASTLE_DEFENSE_POINTS, MUTATION_RATE, MINIMUM_VALUE)
 
+        represented_population = mutation
+
+    f.write("CASTLES:\n\n")
+    for i in range(GENERATIONS):
+        f.write(f"{genes[i]} survived {fitnesses[i]} days\n")
+
+    f.close()
     report.generate_graph(fitnesses, GENERATIONS)
