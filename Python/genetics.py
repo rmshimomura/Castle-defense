@@ -149,6 +149,7 @@ def mutation(population : list, MAXIMUM_ATK_VALUE : int, MAXIMUM_DEF_VALUE : int
     
     # Count the chromosomes whose fitness difference with the best chromosome is less than 30%
     count = 0
+    # 100 , 84, 72, 71 < 70
     
     for chromosome in population:
         if chromosome.fitness >= population[0].fitness * 0.7:
