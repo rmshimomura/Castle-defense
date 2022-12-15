@@ -1,6 +1,6 @@
 # Castle defense
 
-This repository is dedicated to the development of a genetic algorithm to solve the castle defense problem.
+This repository is dedicated to the development of a genetic algorithm to solve one resource allocation problem.
 
 ## Problem description
 
