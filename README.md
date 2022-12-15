@@ -45,3 +45,26 @@ The chromosomes (castle walls configuration) are represented using list of lists
 [[18,65],[18,29],[99,15],[15,41]]
 ```
 The enemies, also are represented in the same way.
+
+## Methodology
+
+- The genetic algorithm is implemented using the following steps:
+
+### Initialization
+1. Define the castle resources (attack points and defense points, and health).
+2. Set the minimun value of the resources (minimum value that each side must have).
+3. Define the population size, the number of generations and the mutation rate.
+4. Generate the initial population of castle configurations, and enemies.
+
+### Algorithm
+1. Check if the sum of resources doesn't exceed the maximum value of the resources. If so, adjust the values so that the sum is equal to the maximum value.
+2. Calculate the fitness of each chromosome using the attack by iteration.
+3. Select the best chromosomes to be the parents of the next generation using tournament selection with $n = 2$. So the population size will be cut in half.
+4. Apply crossover to the parents to generate remaining children (the half that was removed in tournament selection).
+5. Select an elite (the best chromosomes of the generation) to prevent them from suffering mutation.
+6. Apply mutation to the children.
+
+### Termination
+
+1. Print the best chromosomes of the generations.
+2. Generate a graph of the best fitness of each generation.
